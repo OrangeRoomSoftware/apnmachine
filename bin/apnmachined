@@ -25,11 +25,15 @@ def daemonize
     :backtrace  => true,
     :ontop      => false,
     :log_output => true,
-    :app_name   => 'apnmachined',
+    :app_name   => 'apnmachined'
   }
 
-  unless @pid_dir == nil
-    options[:dir_mode] = :script
+  unless @pid_dir.nil?
+    if @pid_dir[0] == '/'
+      options[:dir_mode] = :normal
+    else
+      options[:dir_mode] = :script
+    end
     options[:dir]      = @pid_dir
   end
 
