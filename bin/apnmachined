@@ -14,6 +14,7 @@ def usage
   puts " --redis-url [redis://username:pas127.0.0.1:] url of proxy"
   puts " --log </var/log/apnmachined.log      the path to store the log"
   puts " --daemon                             to daemonize the server (include full path for pem files then)"
+  puts " --pid-dir                            specify the PID directory"
   puts " --apn-host <gateway.push.apple.com>  the apn server host (use 'sandbox' to use apple sandboxes)"
   puts " --apn-port <gateway.push.apple.com>  the apn server port "
   puts " --help                               this message"
@@ -21,11 +22,17 @@ end
 
 def daemonize
   options = {
-      :backtrace  => true,
-      :ontop      => false,
-      :log_output => true,
-      :app_name => 'apnmachined'
-    }
+    :backtrace  => true,
+    :ontop      => false,
+    :log_output => true,
+    :app_name   => 'apnmachined',
+  }
+
+  unless @pid_dir == nil
+    options[:dir_mode] = :script
+    options[:dir]      = @pid_dir
+  end
+
   Daemons.daemonize(options)
 end
 
@@ -36,9 +43,10 @@ opts = GetoptLong.new(
   ["--apn-host", "-b", GetoptLong::REQUIRED_ARGUMENT],
   ["--apn-port", "-q", GetoptLong::REQUIRED_ARGUMENT],
   ["--log", "-l", GetoptLong::REQUIRED_ARGUMENT],
-  ["--pem", "-c", GetoptLong::REQUIRED_ARGUMENT], 
+  ["--pem", "-c", GetoptLong::REQUIRED_ARGUMENT],
   ["--pem-passphrase", "-s", GetoptLong::REQUIRED_ARGUMENT],
   ["--daemon", "-d", GetoptLong::NO_ARGUMENT],
+  ["--pid-dir", "-P", GetoptLong::REQUIRED_ARGUMENT],
   ["--help", "-h", GetoptLong::NO_ARGUMENT]
 )
 
@@ -51,6 +59,8 @@ pem = nil
 pem_passphrase = nil
 daemon = false
 log = STDOUT
+
+@pid_dir = nil
 
 $stdout.sync = true
 
@@ -69,7 +79,7 @@ opts.each do |opt, arg|
     if arg == 'sandbox'
       apn_host = 'gateway.sandbox.push.apple.com'
     else
-      apn_host = arg 
+      apn_host = arg
     end
   when '--apn-port'
     apn_port = arg
@@ -79,6 +89,8 @@ opts.each do |opt, arg|
     pem_passphrase = arg
   when '--daemon'
     daemon = true
+  when '--pid-dir'
+    @pid_dir = arg
   when '--log'
     log = arg
   end
